@@ -1,9 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package library.sestem;
-
 
 public abstract class Item {
 
@@ -19,10 +14,21 @@ public abstract class Item {
         this.specialization = specialization;
     }
 
-    public int getId() { return id; }
-    public String getTitle() { return title; }
-    public int getPublicationYear() { return publicationYear; }
-    public String getSpecialization() { return specialization; }
+    public int getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public int getPublicationYear() {
+        return publicationYear;
+    }
+
+    public String getSpecialization() {
+        return specialization;
+    }
 
     public abstract void getDetails();
 }

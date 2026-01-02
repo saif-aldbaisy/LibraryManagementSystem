@@ -1,11 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package library.sestem;
 
 import java.time.LocalDate;
-
 
 public class BorrowRecord {
 
@@ -21,7 +16,6 @@ public class BorrowRecord {
         this.borrowDate = LocalDate.now();
         this.dueDate = borrowDate.plusDays(7);
     }
-
 
     public boolean isOverdue() {
         return LocalDate.now().isAfter(dueDate) && returnDate == null;

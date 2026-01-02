@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package library.sestem;
 
 import java.time.LocalDate;
@@ -27,19 +23,16 @@ public class Member {
         return false;
     }
 
-   
     public boolean returnItem(Item item) {
         for (BorrowRecord record : borrowHistory) {
             if (record.getItem().equals(item) && record.getReturnDate() == null) {
-                record.setReturnDate(LocalDate.now());
+                record.setReturnDate(java.time.LocalDate.now());
                 return true;
             }
         }
         return false;
     }
 
- 
-    
     public ArrayList<Item> getCurrentBorrowedItems() {
         ArrayList<Item> currentItems = new ArrayList<>();
         for (BorrowRecord record : borrowHistory) {
@@ -57,7 +50,7 @@ public class Member {
                 overdue.add(record);
             }
         }
-        
+
         return overdue;
     }
 
@@ -71,7 +64,6 @@ public class Member {
         return currentRecords;
     }
 
-    // ========== Getters ==========
     public int getMemberId() {
         return memberId;
     }

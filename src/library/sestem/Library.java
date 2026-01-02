@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package library.sestem;
 
 import java.time.LocalDate;
@@ -16,15 +12,165 @@ public class Library {
     private ArrayList<Item> items = new ArrayList<>();
     private ArrayList<Member> members = new ArrayList<>();
     private ArrayList<BorrowRecord> borrowRecords = new ArrayList<>();
+    protected ArrayList<UserAccount> userAccounts = new ArrayList<>();
+    protected UserAccount currentUser = null;
+    private static LibrarySestem librarySestem = new LibrarySestem();
+
+    public UserAccount getCurrentUser() {
+        return currentUser;
+    }
+
+    public void setCurrentUser(UserAccount user) {
+        this.currentUser = user;
+    }
+
+    public ArrayList<UserAccount> getUserAccounts() {
+        return userAccounts;
+    }
 
     public void initializeData() {
-        items.add(new Book(nextItemId++, "Deep Learining", 2012, "Artificial Intelligence.", "Ahmad", 451, "ACM"));
+        items.add(new Book(nextItemId++, "Deep Learning", 2012, "Artificial Intelligence", "Ahmad", 451, "ACM"));
         items.add(new Book(nextItemId++, "Cyber Security", 2022, "Networks", "Nawar", 551, "FBI"));
         items.add(new Project(nextItemId++, "DataBase", 2025, "Software", "Third", "Kings"));
 
         members.add(new Member(nextMemberId++, "Saif"));
         members.add(new Member(nextMemberId++, "Rida"));
         members.add(new Member(nextMemberId++, "Aws"));
+
+        userAccounts.add(new UserAccount("admin", "admin123", "manager"));
+
+        for (Member member : members) {
+            String username = member.getName().toLowerCase().replaceAll("\\s+", "_") + "_" + member.getMemberId();
+            String password = member.getName().toLowerCase() + "123";
+            userAccounts.add(new UserAccount(username, password, "user", member.getMemberId()));
+        }
+    }
+
+    public boolean login() {
+        System.out.println("\n===== Library System Login =====");
+        System.out.print("Username: ");
+        String username = in.nextLine();
+        System.out.print("Password: ");
+        String password = in.nextLine();
+
+        for (UserAccount account : userAccounts) {
+            if (account.authenticate(username, password)) {
+                currentUser = account;
+                System.out.println("Login successful! Welcome, " + username + " (" + account.getRole() + ")");
+                return true;
+            }
+        }
+
+        System.out.println("Invalid username or password!");
+        return false;
+    }
+
+    public void logout() {
+        if (currentUser != null) {
+            System.out.println("Logging out user: " + currentUser.getUsername());
+            currentUser = null;
+        }
+    }
+
+    public boolean isLoggedIn() {
+        return currentUser != null;
+    }
+
+    public String getCurrentUserRole() {
+        return currentUser != null ? currentUser.getRole() : null;
+    }
+
+    public int getCurrentUserMemberId() {
+        return currentUser != null ? currentUser.getMemberId() : -1;
+    }
+
+    public void loginAsUser() {
+        System.out.println("\n=== USER LOGIN ===");
+        boolean loggedIn = false;
+
+        for (int attempts = 0; attempts < 3; attempts++) {
+            System.out.print("Username: ");
+            String username = in.nextLine();
+            System.out.print("Password: ");
+            String password = in.nextLine();
+
+            for (UserAccount account : getUserAccounts()) {
+                if (account.authenticate(username, password) && account.getRole().equals("user")) {
+                    currentUser = account;
+                    loggedIn = true;
+                    System.out.println("Login successful! Welcome, " + username);
+                    librarySestem.showUserMenu();
+                    break;
+                }
+            }
+
+            if (loggedIn)
+                break;
+
+            System.out.println("Invalid username or password! Attempts left: " + (2 - attempts));
+            if (attempts < 2) {
+                System.out.print("Press 1 to try again or 0 to go back: ");
+                int retry = in.nextInt();
+                in.nextLine();
+                if (retry == 0)
+                    return;
+            }
+        }
+
+        if (!loggedIn) {
+            System.out.println("Too many failed attempts. Returning to main menu.");
+        }
+    }
+
+    public void loginAsManager() {
+        System.out.println("\n=== MANAGER LOGIN ===");
+        boolean loggedIn = false;
+
+        for (int attempts = 0; attempts < 3; attempts++) {
+            System.out.print("Username: ");
+            String username = in.nextLine();
+            System.out.print("Password: ");
+            String password = in.nextLine();
+
+            for (UserAccount account : getUserAccounts()) {
+                if (account.authenticate(username, password) && account.getRole().equals("manager")) {
+                    currentUser = account;
+                    loggedIn = true;
+                    System.out.println("Login successful! Welcome, " + username);
+                    librarySestem.showManagerMenu();
+                    break;
+                }
+            }
+
+            if (loggedIn)
+                break;
+
+            System.out.println("Invalid username or password! Attempts left: " + (2 - attempts));
+            if (attempts < 2) {
+                System.out.print("Press 1 to try again or 0 to go back: ");
+                int retry = in.nextInt();
+                in.nextLine();
+                if (retry == 0)
+                    return;
+            }
+        }
+
+        if (!loggedIn) {
+            System.out.println("Too many failed attempts. Returning to main menu.");
+        }
+    }
+
+    public void addManagerAccount(String username, String password) {
+        userAccounts.add(new UserAccount(username, password, "manager"));
+    }
+
+    public UserAccount getUserAccount(String username) {
+        for (UserAccount account : userAccounts) {
+            if (account.getUsername().equals(username)) {
+                return account;
+            }
+        }
+        return null;
     }
 
     public void addBook() {
@@ -129,19 +275,53 @@ public class Library {
     }
 
     public void addMember() {
-        System.out.println("\n===== Add new member =====");
-        System.out.println("Member name : ");
+        System.out.println("\n===== Add New Member =====");
+
+        System.out.print("Member name: ");
         String name = in.nextLine();
 
         Member member = new Member(nextMemberId++, name);
         addMember(member);
-        System.out.println("The member has been added succssfully.! (ID: " + member.getMemberId() + ")");
+
+        String username = name.toLowerCase().replaceAll("\\s+", "_") + "_" + member.getMemberId();
+
+        for (UserAccount account : userAccounts) {
+            if (account.getUsername().equals(username)) {
+                System.out.println("Username already exists! Please choose a different name.");
+                return;
+            }
+        }
+
+        System.out.print("Set password for " + username + ": ");
+        String password = in.nextLine();
+
+        UserAccount userAccount = new UserAccount(username, password, "user", member.getMemberId());
+        userAccounts.add(userAccount);
+
+        System.out.println("Member added successfully!");
+        System.out.println("Member ID: " + member.getMemberId());
+        System.out.println("Username: " + username);
+        System.out.println("Password: " + password);
+        System.out.println("\nNote: The member should use this username and password to login.");
     }
 
     public void borrowItem() {
-        System.out.println("\n===== Borrow item =====");
-        System.out.print("Enter member ID: ");
-        int memberId = in.nextInt();
+        System.out.println("\n===== Borrow Item =====");
+
+        int memberId;
+
+        if (getCurrentUserRole().equals("user")) {
+            memberId = getCurrentUserMemberId();
+            if (memberId == -1) {
+                System.out.println("Error: User account not properly linked to a member.");
+                return;
+            }
+            System.out.println("Borrowing as member ID: " + memberId);
+        } else {
+            System.out.print("Enter member ID: ");
+            memberId = in.nextInt();
+        }
+
         System.out.print("Enter item ID: ");
         int itemId = in.nextInt();
         in.nextLine();
@@ -167,28 +347,42 @@ public class Library {
         BorrowRecord record = new BorrowRecord(item, member);
         borrowRecords.add(record);
         member.borrowItem(item);
-        System.out.println("The loan process was completed successfully!");
+        System.out.println("Borrowing process completed successfully!");
     }
 
     public void returnItem() {
-        System.out.println("\n===== Return item =====");
+        System.out.println("\n===== Return Item =====");
 
-        System.out.println("Enter member ID: ");
-        int memberId = in.nextInt();
-        System.out.println("Enter item ID: ");
+        int memberId;
+
+        if (getCurrentUserRole().equals("user")) {
+            memberId = getCurrentUserMemberId();
+            if (memberId == -1) {
+                System.out.println("Error: User account not properly linked to a member.");
+                return;
+            }
+            System.out.println("Returning as member ID: " + memberId);
+        } else {
+            System.out.print("Enter member ID: ");
+            memberId = in.nextInt();
+        }
+
+        System.out.print("Enter item ID: ");
         int itemId = in.nextInt();
+        in.nextLine();
 
         for (BorrowRecord record : borrowRecords) {
             if (record.getMember().getMemberId() == memberId
                     && record.getItem().getId() == itemId
                     && record.getReturnDate() == null) {
 
-                record.setReturnDate(LocalDate.now());
+                record.setReturnDate(java.time.LocalDate.now());
+                record.getMember().returnItem(record.getItem());
                 System.out.println("Return successful!");
                 return;
             }
         }
-        System.out.println("The return failed. Please verify the information.");
+        System.out.println("Return failed. Please verify the information.");
     }
 
     public void displayAllItems() {
@@ -209,7 +403,7 @@ public class Library {
         int choice = in.nextInt();
         in.nextLine();
         switch (choice) {
-            case 1: 
+            case 1:
                 System.out.println("\n===== All books in the library =====");
                 if (books.isEmpty()) {
                     System.out.println("There are no books in the library.");
@@ -245,7 +439,16 @@ public class Library {
             System.out.println("There are no members.");
         } else {
             for (Member member : members) {
-                System.out.println("\nMember: " + member.getName() + " [ID: " + member.getMemberId() + "]");
+                String username = "No username";
+                for (UserAccount account : userAccounts) {
+                    if (account.getMemberId() == member.getMemberId() && account.getRole().equals("user")) {
+                        username = account.getUsername();
+                        break;
+                    }
+                }
+
+                System.out.println("\nMember: " + member.getName() + " [ID: " + member.getMemberId() + "] [Username: "
+                        + username + "]");
 
                 ArrayList<BorrowRecord> currentRecords = member.getCurrentBorrowedRecords();
 
@@ -254,10 +457,10 @@ public class Library {
                 } else {
                     System.out.print("    Borrowed items:\n");
                     for (BorrowRecord record : currentRecords) {
-                    
+
                         System.out.print("          ");
                         record.getItem().getDetails();
-                        
+
                         System.out.println("\n          Borrow date: " + record.getBorrowDate());
                         System.out.println("          Due date: " + record.getDueDate());
 
@@ -311,15 +514,13 @@ public class Library {
                     results.add(item);
                 }
             }
-        } // البحث حسب العنوان
-        else if (keyWord.equals("Title")) {
+        } else if (keyWord.equals("Title")) {
             for (Item item : items) {
                 if (item.getTitle().contains(searchWord)) {
                     results.add(item);
                 }
             }
-        } // البحث حسب التخصص
-        else if (keyWord.equals("specialization")) {
+        } else if (keyWord.equals("specialization")) {
             for (Item item : items) {
                 if (item.getSpecialization().contains(searchWord)) {
                     results.add(item);
@@ -357,6 +558,44 @@ public class Library {
                 System.out.println("\n  Borrower: " + record.getMember().getName());
                 System.out.println("  Borrow date: " + record.getBorrowDate());
                 System.out.println("  Due date: " + record.getDueDate());
+            }
+        }
+    }
+
+    public void displayAvailableItems() {
+        System.out.println("\n===== Items Currently Available =====");
+
+        ArrayList<BorrowRecord> currentRecords = new ArrayList<>();
+        ArrayList<Item> availableItems = new ArrayList<>();
+
+        for (BorrowRecord record : borrowRecords) {
+            if (record.getReturnDate() == null) {
+                currentRecords.add(record);
+            }
+        }
+
+        for (Item item : items) {
+            boolean isBorrowed = false;
+
+            for (BorrowRecord record : currentRecords) {
+                if (item.getId() == record.getItem().getId()) {
+                    isBorrowed = true;
+                    break;
+                }
+            }
+
+            if (!isBorrowed) {
+                availableItems.add(item);
+            }
+        }
+
+        if (availableItems.isEmpty()) {
+            System.out.println("There are no available items at this time.");
+        } else {
+            System.out.println("Available items:");
+            for (Item item : availableItems) {
+                item.getDetails();
+                System.out.println();
             }
         }
     }
@@ -556,7 +795,8 @@ public class Library {
             return;
         }
 
-        System.out.println("\n===== Members who borrowed the book (" + bookId + ") between " + startDate + " and " + endDate + " =====");
+        System.out.println("\n===== Members who borrowed the book (" + bookId + ") between " + startDate + " and "
+                + endDate + " =====");
         boolean found = false;
 
         for (BorrowRecord record : borrowRecords) {
@@ -585,28 +825,28 @@ public class Library {
     }
 
     public boolean removeItem(int itemId) {
-    for (int i = 0; i < items.size(); i++) {
-        if (items.get(i).getId() == itemId) {
-            items.remove(i);
-            return true;
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).getId() == itemId) {
+                items.remove(i);
+                return true;
+            }
         }
+        return false;
     }
-    return false;
-}
 
     public void addMember(Member member) {
         members.add(member);
     }
 
     public boolean removeMember(int memberId) {
-    for (int i = 0; i < members.size(); i++) {
-        if (members.get(i).getMemberId() == memberId) {
-            members.remove(i);
-            return true;
+        for (int i = 0; i < members.size(); i++) {
+            if (members.get(i).getMemberId() == memberId) {
+                members.remove(i);
+                return true;
+            }
         }
+        return false;
     }
-    return false;
-}
 
     public Item findItem(int itemId) {
         for (Item item : items) {
@@ -616,6 +856,7 @@ public class Library {
         }
         return null;
     }
+
     public Member findMember(int memberId) {
         for (Member member : members) {
             if (member.getMemberId() == memberId) {
@@ -636,6 +877,57 @@ public class Library {
 
     public ArrayList<Member> getMembers() {
         return new ArrayList<>(members);
+    }
+
+    public void displayMyBorrowedItems() {
+        System.out.println("\n===== My Borrowed Items =====");
+
+        int memberId = getCurrentUserMemberId();
+        if (memberId == -1) {
+            System.out.println("Error: User account not properly linked to a member.");
+            return;
+        }
+
+        Member member = findMember(memberId);
+        if (member == null) {
+            System.out.println("Member not found.");
+            return;
+        }
+
+        java.util.ArrayList<BorrowRecord> currentRecords = member.getCurrentBorrowedRecords();
+
+        if (currentRecords.isEmpty()) {
+            System.out.println("You have no borrowed items.");
+        } else {
+            System.out.println("Your borrowed items:");
+            for (BorrowRecord record : currentRecords) {
+                System.out.print("    ");
+                record.getItem().getDetails();
+                System.out.println("\n    Borrow date: " + record.getBorrowDate());
+                System.out.println("    Due date: " + record.getDueDate());
+
+                if (record.isOverdue()) {
+                    System.out.println("    [OVERDUE! Please return ASAP]");
+                }
+                System.out.println();
+            }
+        }
+    }
+
+    public void viewAllUserAccounts() {
+        System.out.println("\n===== All User Accounts =====");
+        System.out.println("Total accounts: " + getUserAccounts().size());
+        System.out.println("+-------------------------+------------+---------+");
+        System.out.println("| Username                | Role       | MemberID|");
+        System.out.println("+-------------------------+------------+---------+");
+
+        for (UserAccount account : getUserAccounts()) {
+            System.out.printf("| %-23s | %-10s | %-7s |\n",
+                    account.getUsername(),
+                    account.getRole(),
+                    account.getMemberId() == -1 ? "N/A" : account.getMemberId());
+        }
+        System.out.println("+-------------------------+------------+---------+");
     }
 
 }
